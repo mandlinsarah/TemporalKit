@@ -21,11 +21,12 @@ def save_image(image, filename, directory):
     # save the image to the specified file path
     image.save(file_path)
 
+
 def on_button_click():
     global lastimage
     extension_path = os.path.abspath(__file__)
-    extension_dir =  os.path.dirname(os.path.dirname(extension_path))
-    extension_folder = os.path.join(extension_dir,"squares")
+    extension_dir = os.path.dirname(os.path.dirname(extension_path))
+    extension_folder = os.path.join(extension_dir, 'squares')
     
     # save the image to the parent directory with a new filename
     save_image(lastimage, 'last.png', extension_folder)
@@ -34,7 +35,7 @@ def on_button_click():
 class Script(scripts.Script):
     global button
     def title(self):
-        return "TemporalKit"
+        return 'TemporalKit'
 
     def show(self, is_img2img):
         if is_img2img:
@@ -44,14 +45,14 @@ class Script(scripts.Script):
 
     def ui(self, is_img2img): 
         global lastimage
-        savebutton = gr.Button("save", label="Save")
+        savebutton = gr.Button('save', label='Save')
         savebutton.click(
             fn=on_button_click,
         )
-        movebutton = gr.Button("move", label="Move")
+        movebutton = gr.Button('move', label='Move')
         movebutton.click( 
             fn=None,
-            _js="switch_to_temporal_kit",
+            _js='switch_to_temporal_kit',
         )  
 
 
@@ -61,4 +62,5 @@ class Script(scripts.Script):
         lastimage = processed.images[0]
         #registerbuttons(button)
         return processed
+
 
