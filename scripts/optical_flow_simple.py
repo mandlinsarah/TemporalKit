@@ -3,7 +3,8 @@ import glob
 import cv2
 import numpy as np
 from PIL import Image
-import scripts.berry_utility as utilityb
+from scripts.berry_utility import base64_to_texture
+
 
 def read_image(file_path):
     image = cv2.imread(file_path, cv2.IMREAD_COLOR)
@@ -48,6 +49,7 @@ def compute_optical_flow(image1, image2):
     flow = cv2.calcOpticalFlowFarneback(image1, image2, None, pyr_scale=0.5, levels=3, winsize=15, iterations=3, poly_n=5, poly_sigma=1.2, flags=0)
     return flow
 
+
 def warp_image(image, flow):
     h, w = image.shape[:2]
     flow_map = np.array([[x, y] for y in range(h) for x in range(w)], dtype=np.float32) - flow.reshape(-1, 2)
@@ -57,23 +59,16 @@ def warp_image(image, flow):
     flow_map[:, :, 0] = np.clip(flow_map[:, :, 0], 0, w - 1)
     flow_map[:, :, 1] = np.clip(flow_map[:, :, 1], 0, h - 1)
 
-    warped_image = cv2.remap(image, flow_map, None, cv2.INTER_LANCZOS4    )
+    warped_image = cv2.remap(image, flow_map, None, cv2.INTER_LANCZOS4)
     return warped_image
 
-def process_image_basic (image1_path, image2_path, provided_image_path,max_dimension, index,output_folder):
 
-    #image1 = read_image(image1_path)
-   # image2 = read_image(image2_path)
-    
-#    image1 = resize_image(image1, max_dimension)
- #   image2 = resize_image(image2, max_dimension)
-    image1 =  resize_image(utilityb.base64_to_texture(image1_path),max_dimension)
-    image2 =  resize_image(utilityb.base64_to_texture(image2_path),max_dimension)
-    
-#    provided_image = read_image(provided_image_path)
-    provided_image = utilityb.base64_to_texture(provided_image_path)
+def process_image_basic (image1_path, image2_path, provided_image_path,max_dimension, index,output_folder):
+    image1 =  resize_image(base64_to_texture(image1_path),max_dimension)
+    image2 =  resize_image(base64_to_texture(image2_path),max_dimension)
+    provided_image = base64_to_texture(provided_image_path)
     provided_image = resize_image(provided_image, max_dimension)
-    
+
     flow = compute_optical_flow(cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY), cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY))
     warped_image = warp_image(provided_image, flow)
 
@@ -82,12 +77,13 @@ def process_image_basic (image1_path, image2_path, provided_image_path,max_dimen
     print(f"Warped image saved as '{warped_image_path}'")
     combine_images(image1,image2,provided_image,warped_image,f"{index}.png")
     return warped_image_path,flow
-  #  return provided_image_path,flow
-    #AAAAAAAAAAAAAAAAAAA
+
 
 def process_image(image1, image2, provided_image, output_folder, flow_output_folder, max_dimension, index):
     image1 = resize_image(image1, max_dimension)
     image2 = resize_image(image2, max_dimension)
+
+    provided_image = provided_image or np.zeros_like(image1)  # Handle None provided_image
 
     flow = compute_optical_flow(cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY), cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY))
     warped_image = warp_image(provided_image, flow)
@@ -101,6 +97,7 @@ def process_image(image1, image2, provided_image, output_folder, flow_output_fol
     print(f"Optical flow map saved as '{flow_image_path}'")
 
     return warped_image
+
 
 def process_images(input_folder, output_folder, flow_output_folder, provided_image_path, max_dimension):
     if not os.path.exists(output_folder):
@@ -122,6 +119,7 @@ def process_images(input_folder, output_folder, flow_output_folder, provided_ima
         image2 = read_image(image_files[i + 1])
 
         provided_image = process_image(image1, image2, provided_image, output_folder, flow_output_folder, max_dimension, i)
+
 
 def main():
     input_folder = "Input_Images"
@@ -162,4 +160,3 @@ def combine_images(img1, img2, img3, img4, output_file, output_folder="debug"):
     # Save combined image to output folder
     output_path = os.path.join(output_folder, output_file)
     combined_image.save(output_path)
-
